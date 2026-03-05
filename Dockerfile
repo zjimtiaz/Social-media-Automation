@@ -11,6 +11,12 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY web/ ./
+
+# Dummy env vars needed at build time (real values injected at runtime)
+ENV NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-anon-key
+ENV NEXT_TELEMETRY_DISABLED=1
+
 RUN npm run build
 
 # Production runner
@@ -19,6 +25,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
