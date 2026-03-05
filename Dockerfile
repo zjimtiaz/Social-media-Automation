@@ -12,9 +12,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY web/ ./
 
-# Placeholders are replaced at runtime by entrypoint.sh
-ENV NEXT_PUBLIC_SUPABASE_URL=https://placeholder.supabase.co
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=placeholder-anon-key
+# These are public keys (NEXT_PUBLIC_ = client-side, intentionally public)
+ENV NEXT_PUBLIC_SUPABASE_URL=https://vhpgkmffulhfxtdfygem.supabase.co
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZocGdrbWZmdWxoZnh0ZGZ5Z2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzQ5MjksImV4cCI6MjA4ODMxMDkyOX0.KZoXjrsubpS44wZ9bhIOMVHl-BG9NhwnEIo5juOmSq0
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
