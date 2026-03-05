@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
-import { createClient } from "@/lib/supabase/client";
+import { createSupabaseClient } from "@/lib/supabase/client";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -55,7 +55,7 @@ export function DashboardShell({
   const pathname = usePathname();
 
   const handleLogout = useCallback(async () => {
-    const supabase = createClient();
+    const supabase = createSupabaseClient();
     await supabase.auth.signOut();
     router.push("/login");
   }, [router]);

@@ -1,11 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import type { Database } from "@/types/database";
 
 export async function createSupabaseServer() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -19,14 +18,10 @@ export async function createSupabaseServer() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // The `setAll` method is called from a Server Component.
-            // This can be ignored if you have middleware refreshing sessions.
+            // Called from Server Component - ignored, middleware handles refresh
           }
         },
       },
     }
   );
 }
-
-/** @deprecated Use createSupabaseServer instead */
-export const createClient = createSupabaseServer;

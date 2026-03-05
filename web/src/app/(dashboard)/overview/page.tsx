@@ -1,8 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createSupabaseServer } from "@/lib/supabase/server";
 import { OverviewClient } from "./overview-client";
 
 export default async function OverviewPage() {
-  const supabase = await createClient();
+  const supabase = await createSupabaseServer();
 
   const {
     data: { user },
