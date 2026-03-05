@@ -11,6 +11,7 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -18,41 +19,54 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccess("");
 
-    const supabase = createSupabaseClient();
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      },
-    });
+    try {
+      const supabase = createSupabaseClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { full_name: fullName },
+        },
+      });
 
-    if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-      return;
-    }
-
-    // Create organization
-    if (data.user && orgName) {
-      const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      const { data: org, error: orgError } = await supabase
-        .from("organizations")
-        .insert({ name: orgName, slug })
-        .select()
-        .single();
-
-      if (!orgError && org) {
-        await supabase
-          .from("profiles")
-          .update({ organization_id: org.id, role: "owner" })
-          .eq("id", data.user.id);
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
       }
-    }
 
-    router.push("/overview");
-    router.refresh();
+      // If email confirmation is required, show message instead of redirecting
+      if (data.user && !data.session) {
+        setSuccess("Check your email for a confirmation link, then sign in.");
+        setLoading(false);
+        return;
+      }
+
+      // Create organization (may fail if tables don't exist yet — non-blocking)
+      if (data.user && orgName) {
+        const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        const { data: org } = await supabase
+          .from("organizations")
+          .insert({ name: orgName, slug })
+          .select()
+          .single();
+
+        if (org) {
+          await supabase
+            .from("profiles")
+            .update({ organization_id: org.id, role: "owner" })
+            .eq("id", data.user.id);
+        }
+      }
+
+      router.push("/overview");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,6 +82,12 @@ export default function SignupPage() {
         {error && (
           <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
             {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
+            {success}
           </div>
         )}
 

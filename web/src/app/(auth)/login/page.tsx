@@ -17,18 +17,23 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const supabase = createSupabaseClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const supabase = createSupabaseClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+      } else {
+        router.push("/overview");
+        router.refresh();
+      }
+    } catch {
+      setError("Unable to connect. Please try again.");
       setLoading(false);
-    } else {
-      router.push("/overview");
-      router.refresh();
     }
   };
 

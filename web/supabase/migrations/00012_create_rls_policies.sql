@@ -6,6 +6,9 @@ CREATE POLICY "Users can view their org" ON public.organizations
     id IN (SELECT organization_id FROM public.profiles WHERE id = auth.uid())
   );
 
+CREATE POLICY "Authenticated users can create orgs" ON public.organizations
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
 -- Profiles
 CREATE POLICY "Users can view profiles in their org" ON public.profiles
   FOR SELECT USING (
