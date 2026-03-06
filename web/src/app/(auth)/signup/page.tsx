@@ -11,7 +11,6 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [orgName, setOrgName] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -19,7 +18,6 @@ export default function SignupPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setSuccess("");
 
     try {
       const supabase = createSupabaseClient();
@@ -33,13 +31,6 @@ export default function SignupPage() {
 
       if (signUpError) {
         setError(signUpError.message);
-        setLoading(false);
-        return;
-      }
-
-      // If email confirmation is required, show message instead of redirecting
-      if (data.user && !data.session) {
-        setSuccess("Check your email for a confirmation link, then sign in.");
         setLoading(false);
         return;
       }
@@ -82,12 +73,6 @@ export default function SignupPage() {
         {error && (
           <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
             {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="p-3 text-sm text-green-600 bg-green-50 rounded-md">
-            {success}
           </div>
         )}
 
