@@ -3,6 +3,21 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Admin bypass: if admin_session cookie exists, allow everything
+  const adminCookie = request.cookies.get("admin_session");
+  const isAdmin = adminCookie?.value === "zuhra_admin_authenticated";
+
+  if (isAdmin) {
+    // Redirect admin away from auth pages to dashboard
+    const isAuthRoute = pathname === "/login" || pathname === "/signup";
+    if (isAuthRoute) {
+      const overviewUrl = request.nextUrl.clone();
+      overviewUrl.pathname = "/overview";
+      return NextResponse.redirect(overviewUrl);
+    }
+    return NextResponse.next();
+  }
+
   // If Supabase is not configured, let all requests through
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next();

