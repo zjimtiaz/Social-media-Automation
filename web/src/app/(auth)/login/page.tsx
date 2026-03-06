@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createSupabaseClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,18 +17,27 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    const input = identifier.trim();
+
     // Admin bypass: username "zuhra" with password "zuhra"
-    if (email === "zuhra" && password === "zuhra") {
+    if (input.toLowerCase() === "zuhra" && password === "zuhra") {
       document.cookie = "admin_session=zuhra_admin_authenticated; path=/; max-age=31536000; SameSite=Lax";
       router.push("/overview");
       router.refresh();
       return;
     }
 
+    // If input doesn't contain @, it's a username — not supported by Supabase
+    if (!input.includes("@")) {
+      setError("Please use your email address to sign in, or use your admin username.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const supabase = createSupabaseClient();
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: input,
         password,
       });
 
@@ -62,15 +71,17 @@ export default function LoginPage() {
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
             Username or Email
           </label>
           <input
-            id="email"
+            id="identifier"
             type="text"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="username"
+            placeholder="zuhra or you@example.com"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
